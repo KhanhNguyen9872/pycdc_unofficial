@@ -5,6 +5,7 @@
 #include "FastStack.h"
 #include "pyc_numeric.h"
 #include "bytecode.h"
+#include <iostream>
 
 // This must be a triple quote (''' or """), to handle interpolated string literals containing the opposite quote style.
 // E.g. f'''{"interpolated "123' literal"}'''    -> valid.
@@ -146,6 +147,7 @@ PycRef<ASTNode> BuildFromCode(PycRef<PycCode> code, PycModule* mod)
                     if (!stack_hist.empty())
                         stack_hist.pop();
                 }
+
                 blocks.pop();
 
                 if (blocks.empty())
@@ -1697,12 +1699,10 @@ PycRef<ASTNode> BuildFromCode(PycRef<PycCode> code, PycModule* mod)
                         && tmp->blktype() != ASTBlock::BLK_ASYNCFOR
                         && tmp->blktype() != ASTBlock::BLK_WHILE) {
                     
-                    if (stack_hist.size() == 0) {
-                        break;
+                    if (!stack_hist.empty()) {
+                        stack = stack_hist.top();
+                        stack_hist.pop();
                     };
-
-                    stack = stack_hist.top();
-                    stack_hist.pop();
 
                     tmp = curblock;
                     blocks.pop();
@@ -1877,9 +1877,14 @@ PycRef<ASTNode> BuildFromCode(PycRef<PycCode> code, PycModule* mod)
 
                     PycRef<ASTBlock> prev = curblock;
                     blocks.pop();
+
+                    if (blocks.empty()) {
+                        std::cout << "\n# Decompile incomplete!";
+                        exit(0);
+                    }
+                    
                     curblock = blocks.top();
                     curblock->append(prev.cast<ASTNode>());
-
                     bc_next(source, mod, opcode, operand, pos);
                 }
             }
