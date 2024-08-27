@@ -1696,6 +1696,11 @@ PycRef<ASTNode> BuildFromCode(PycRef<PycCode> code, PycModule* mod)
                         && tmp->blktype() != ASTBlock::BLK_FOR
                         && tmp->blktype() != ASTBlock::BLK_ASYNCFOR
                         && tmp->blktype() != ASTBlock::BLK_WHILE) {
+                    
+                    if (stack_hist.size() == 0) {
+                        break;
+                    };
+
                     stack = stack_hist.top();
                     stack_hist.pop();
 
