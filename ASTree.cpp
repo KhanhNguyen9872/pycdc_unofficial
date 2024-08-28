@@ -1617,29 +1617,33 @@ PycRef<ASTNode> BuildFromCode(PycRef<PycCode> code, PycModule* mod)
         case Pyc::MAKE_CLOSURE_A:
         case Pyc::MAKE_FUNCTION_A:
             {
-                PycRef<ASTNode> fun_code = stack.top();
-                stack.pop();
+                try {
+                    PycRef<ASTNode> fun_code = stack.top();
+                    stack.pop();
 
-                /* Test for the qualified name of the function (at TOS) */
-                int tos_type = fun_code.cast<ASTObject>()->object().type();
-                if (tos_type != PycObject::TYPE_CODE &&
-                    tos_type != PycObject::TYPE_CODE2) {
-                    fun_code = stack.top();
-                    stack.pop();
-                }
+                    /* Test for the qualified name of the function (at TOS) */
+                    int tos_type = fun_code.cast<ASTObject>()->object().type();
+                    if (tos_type != PycObject::TYPE_CODE &&
+                        tos_type != PycObject::TYPE_CODE2) {
+                        fun_code = stack.top();
+                        stack.pop();
+                    }
 
-                ASTFunction::defarg_t defArgs, kwDefArgs;
-                const int defCount = operand & 0xFF;
-                const int kwDefCount = (operand >> 8) & 0xFF;
-                for (int i = 0; i < defCount; ++i) {
-                    defArgs.push_front(stack.top());
-                    stack.pop();
+                    ASTFunction::defarg_t defArgs, kwDefArgs;
+                    const int defCount = operand & 0xFF;
+                    const int kwDefCount = (operand >> 8) & 0xFF;
+                    for (int i = 0; i < defCount; ++i) {
+                        defArgs.push_front(stack.top());
+                        stack.pop();
+                    }
+                    for (int i = 0; i < kwDefCount; ++i) {
+                        kwDefArgs.push_front(stack.top());
+                        stack.pop();
+                    }
+                    stack.push(new ASTFunction(fun_code, defArgs, kwDefArgs));
+                } catch (std::exception& ex) {
+                    std::cout << "# Error decompyling function: " << ex.what() << "\n";
                 }
-                for (int i = 0; i < kwDefCount; ++i) {
-                    kwDefArgs.push_front(stack.top());
-                    stack.pop();
-                }
-                stack.push(new ASTFunction(fun_code, defArgs, kwDefArgs));
             }
             break;
         case Pyc::NOP:
