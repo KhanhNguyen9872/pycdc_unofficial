@@ -719,16 +719,20 @@ PycRef<ASTNode> BuildFromCode(PycRef<PycCode> code, PycModule* mod)
             /* Fall through */
         case Pyc::DELETE_NAME_A:
             {
-                PycRef<PycString> varname = code->getName(operand);
+                try {
+                    PycRef<PycString> varname = code->getName(operand);
 
-                if (varname->length() >= 2 && varname->value()[0] == '_'
-                        && varname->value()[1] == '[') {
-                    /* Don't show deletes that are a result of list comps. */
-                    break;
+                    if (varname->length() >= 2 && varname->value()[0] == '_'
+                            && varname->value()[1] == '[') {
+                        /* Don't show deletes that are a result of list comps. */
+                        break;
+                    }
+
+                    PycRef<ASTNode> name = new ASTName(varname);
+                    curblock->append(new ASTDelete(name));
+                } catch (std::exception& ex) {
+                    std::cout << "# DELETE_NAME: " << ex.what() << "\n";
                 }
-
-                PycRef<ASTNode> name = new ASTName(varname);
-                curblock->append(new ASTDelete(name));
             }
             break;
         case Pyc::DELETE_FAST_A:
